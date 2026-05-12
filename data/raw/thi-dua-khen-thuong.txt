@@ -1,0 +1,65 @@
+TT
+Danh mục
+Số lượng
+1.
+Huân chương Sao vàng
+1
+2.
+Huân chương Hồ Chí Minh
+3
+3.
+Anh hùng lao động
+4.
+Huân chương Độc lập hạng Nhất
+1
+5.
+Huân chương Độc lập hạng Ba
+1
+6.
+Huân chương Lao động hạng Nhì
+25
+7.
+Bằng khen của Giám đốc ĐHQGHN
+2.235
+8.
+Cờ thi đua của ĐHQGHN
+98
+9.
+Cờ thi đua của Bộ Giáo dục và Đào tạo (Bộ GD&ĐT)
+48
+10.
+Cờ thi đua Chính Phủ
+5
+11.
+Bằng khen của Bộ GD&ĐT
+1.568
+12.
+Chiến sĩ thi đua toàn quốc
+7
+13.
+Chiến sĩ thi đua cấp Bộ GD&ĐT
+238
+14.
+Chiến sĩ thi đua cấp ĐHQGHN
+410
+15.
+Gương mặt trẻ tiêu biểu ĐHQGHN
+600
+16.
+Tập thể Lao động xuất sắc
+1.140
+17.
+Kỷ niệm chương “Vì sự nghiệp Phát triển ĐHQGHN”
+215
+18.
+Nhà giáo Nhân dân
+62
+19.
+Nhà giáo Ưu tú
+137
+20.
+Học sinh đạt giải thưởng Quốc tế, Khu vực
+249
+21.
+Học sinh đạt giải Quốc gia
+637
