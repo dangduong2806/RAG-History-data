@@ -64,15 +64,6 @@ def normalize_answer(text):
     return normalized
 
 
-def squad_normalize_answer(text):
-    normalized = _normalize_unicode(text or "")
-    normalized = _lower(normalized)
-    normalized = _remove_punctuation(normalized)
-    normalized = re.sub(r"\b(a|an|the)\b", " ", normalized)
-    normalized = _white_space_fix(normalized)
-    return normalized
-
-
 def _strip_generic_prefixes(text):
     changed = True
     while changed:
@@ -117,19 +108,9 @@ def get_tokens(text, canonical=False):
     return normalized.split()
 
 
-def squad_get_tokens(text):
-    if not text:
-        return []
-    return squad_normalize_answer(text).split()
-
-
 def compute_exact(a_gold, a_pred, canonical=False):
     normalizer = canonicalize_answer if canonical else normalize_answer
     return int(normalizer(a_gold) == normalizer(a_pred))
-
-
-def squad_compute_exact(a_gold, a_pred):
-    return int(squad_normalize_answer(a_gold) == squad_normalize_answer(a_pred))
 
 
 def compute_f1(a_gold, a_pred, canonical=False):
@@ -150,41 +131,9 @@ def compute_f1(a_gold, a_pred, canonical=False):
     return f1
 
 
-def squad_compute_f1(a_gold, a_pred):
-    gold_toks = squad_get_tokens(a_gold)
-    pred_toks = squad_get_tokens(a_pred)
-    common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
-    num_same = sum(common.values())
-
-    if len(gold_toks) == 0 or len(pred_toks) == 0:
-        return int(gold_toks == pred_toks)
-
-    if num_same == 0:
-        return 0.0
-
-    precision = 1.0 * num_same / len(pred_toks)
-    recall = 1.0 * num_same / len(gold_toks)
-    return (2 * precision * recall) / (precision + recall)
-
-
 def compute_recall(a_gold, a_pred, canonical=False):
     gold_toks = get_tokens(a_gold, canonical=canonical)
     pred_toks = get_tokens(a_pred, canonical=canonical)
-    common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
-    num_same = sum(common.values())
-
-    if len(gold_toks) == 0:
-        return int(gold_toks == pred_toks)
-
-    if num_same == 0:
-        return 0.0
-
-    return 1.0 * num_same / len(gold_toks)
-
-
-def squad_compute_recall(a_gold, a_pred):
-    gold_toks = squad_get_tokens(a_gold)
-    pred_toks = squad_get_tokens(a_pred)
     common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
     num_same = sum(common.values())
 
