@@ -11,16 +11,22 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+SRC_ROOT = os.path.join(PROJECT_ROOT, "src")
+CURRENT_DIR = os.path.dirname(__file__)
+
+for path in (PROJECT_ROOT, SRC_ROOT, CURRENT_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 try:
-    from evaluation.IAA_metrics import (
+    from src.evaluation.IAA_metrics import (
         aggregate_mean,
         canonicalize_answer,
         compute_exact,
         compute_f1,
     )
 except ImportError:
-    from evaluation.IAA_metrics import aggregate_mean, canonicalize_answer, compute_exact, compute_f1
+    from IAA_metrics import aggregate_mean, canonicalize_answer, compute_exact, compute_f1
 
 
 DEFAULT_SUBSET = "data/iaa/subset.csv"
