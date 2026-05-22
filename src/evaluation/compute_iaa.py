@@ -13,14 +13,14 @@ if hasattr(sys.stdout, "reconfigure"):
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 try:
-    from src.evaluation.qa_metrics import (
+    from evaluation.IAA_metrics import (
         aggregate_mean,
         canonicalize_answer,
         compute_exact,
         compute_f1,
     )
 except ImportError:
-    from qa_metrics import aggregate_mean, canonicalize_answer, compute_exact, compute_f1
+    from evaluation.IAA_metrics import aggregate_mean, canonicalize_answer, compute_exact, compute_f1
 
 
 DEFAULT_SUBSET = "data/iaa/subset.csv"
