@@ -8,15 +8,19 @@ import sys
 import numpy as np
 from dotenv import load_dotenv
 
+# This pipeline uses PyTorch only. Avoid importing TensorFlow through
+# transformers when TensorFlow/protobuf versions in the environment differ.
+os.environ.setdefault("USE_TF", "0")
+
 # Load biến môi trường từ file .env (nếu có)
 load_dotenv()
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-try:
-    from openai import OpenAI
-except ImportError:
-    OpenAI = None
+
+import torch
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import faiss
 from sentence_transformers import SentenceTransformer, CrossEncoder
@@ -31,20 +35,33 @@ class RAGSystem:
         reranker_model="BAAI/bge-reranker-base",
         top_k_retrieve=10,
         top_k_rerank=3,
+        few_shot_questions_file = "data/train/questions.txt",
+        few_shot_answers_file="data/train/reference_answers.txt",
+        num_few_shot=5
     ):
         self.chunks_file = chunks_file
         self.index_dir = index_dir
         self.top_k_retrieve = top_k_retrieve
         self.top_k_rerank = top_k_rerank
+        
+        self.num_few_shot = num_few_shot
+        self.few_shot_examples = self._load_few_shot_examples(
+            few_shot_questions_file,
+            few_shot_answers_file,
+            num_few_shot
+        )
 
         # --- LLM API config ---
-        self.api_key = os.getenv("LLM_API_KEY")
-        self.api_base = os.getenv("LLM_API_BASE", "https://api.openai.com/v1")
-        self.model_name = os.getenv("LLM_MODEL", "gpt-120b")
-        if OpenAI and self.api_key:
-            self.llm_client = OpenAI(api_key=self.api_key, base_url=self.api_base)
-        else:
-            self.llm_client = None
+        self.model_name = os.getenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name,
+            torch_dtype="auto",
+            device_map="auto"
+        )
+
+        self.model.eval()
 
         # --- Load chunks ---
         print(f"Loading chunks from {chunks_file}...")
@@ -70,6 +87,29 @@ class RAGSystem:
                 if line:
                     chunks.append(json.loads(line))
         return chunks
+    
+    def _load_few_shot_examples(self, questions_file, answers_file, max_examples):
+        if max_examples <= 0:
+            return []
+        
+        if not os.path.exists(questions_file) or not os.path.exists(answers_file):
+            print("Không tìm thấy file data cho few-shot")
+            return []
+
+        with open(questions_file, "r", encoding="utf-8") as fq:
+            questions = [line.strip() for line in fq if line.strip()]
+        with open(answers_file, "r", encoding="utf-8") as fa:
+            answers = [line.strip() for line in fa if line.strip()]
+
+        examples = []
+        for question, answer in zip(questions, answers):
+            examples.append({
+                "question": question,
+                "answer": answer,
+            })
+        
+        return examples[:max_examples]
+        
 
     def _init_faiss(self):
         index_path = os.path.join(self.index_dir, "index.faiss")
@@ -164,33 +204,70 @@ class RAGSystem:
         for i, ctx in enumerate(contexts):
             context_text += f"\n--- Ngữ cảnh {i+1} (Nguồn: {ctx.get('topic', 'N/A')}) ---\n"
             context_text += ctx["content"] + "\n"
+        
+        few_shot_text = ""
+        for i, example in enumerate(self.few_shot_examples):
+            few_shot_text += f"\nVí dụ {i+1}:\n"
+            few_shot_text += f"Câu hỏi: {example['question']}\n"
+            few_shot_text += f"Trả lời: {example['answer']}\n"
+        
 
         prompt = f"""Bạn là một chuyên gia về Đại học Quốc gia Hà Nội (ĐHQGHN/VNU). 
 Dựa vào CÁC NGỮ CẢNH được cung cấp bên dưới, hãy trả lời câu hỏi một cách NGẮN GỌN, CHÍNH XÁC và ĐẦY ĐỦ.
 Chỉ sử dụng thông tin từ ngữ cảnh. Nếu ngữ cảnh không chứa câu trả lời, hãy nói "Không tìm thấy thông tin trong tài liệu."
 
+Dưới đây là một số ví dụ về cách trả lời:
+{few_shot_text}
+
+CÁC NGỮ CẢNH:
 {context_text}
 
 Câu hỏi: {query}
 
 Trả lời ngắn gọn:"""
 
-        if not self.llm_client:
-            return "[LLM chưa được cấu hình. Vui lòng set LLM_API_KEY]"
-
         try:
-            response = self.llm_client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": "Bạn là trợ lý trả lời câu hỏi về Đại học Quốc gia Hà Nội. Trả lời ngắn gọn, chính xác dựa trên ngữ cảnh."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.0,
-                max_tokens=300,
+            messages = [
+                {
+                    "role": "system",
+                    "content": "Bạn là trợ lý trả lời câu hỏi về Đại học Quốc gia Hà Nội. Trả lời ngắn gọn, chính xác dựa trên ngữ cảnh."
+                },
+                {
+                    "role":"user",
+                    "content": prompt
+                }
+            ]
+
+            text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
             )
-            return response.choices[0].message.content.strip()
+
+            model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+
+            with torch.no_grad():
+                generated_ids = self.model.generate(
+                    **model_inputs,
+                    max_new_tokens=300,
+                    temperature=0.0,
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                )
+            
+            generated_ids = [
+                output_ids[len(input_ids):]
+                for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+            ]
+
+            response = self.tokenizer.batch_decode(
+                generated_ids,
+                skip_special_tokens=True
+            )[0]
+
+            return response.strip()
         except Exception as e:
-            return f"[Lỗi API: {str(e)}]"
+            return f"[Lỗi Qwen local: {str(e)}]"
 
     def ask(self, query, verbose=False):
         """Pipeline đầy đủ: Retrieve → Rerank → Generate."""
