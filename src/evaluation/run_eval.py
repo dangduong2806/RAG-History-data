@@ -3,7 +3,10 @@ Chạy full evaluation: Load RAG v2.0 → chạy test set → lưu output → t�
 """
 import os
 import sys
+from dotenv import load_dotenv
 sys.stdout.reconfigure(encoding='utf-8')
+
+load_dotenv()
 
 # Import RAG System
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -24,16 +27,23 @@ def main():
         print("  python src/data_annotation/generate_qa.py")
         return
 
-    api_key = os.getenv("LLM_API_KEY")
-    if not api_key:
+    llm_api_key = (os.getenv("LLM_API_KEY") or "").strip()
+    hf_token = (os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN") or "").strip()
+    api_base = os.getenv("LLM_API_BASE", "https://api.openai.com/v1").lower()
+    has_router_token = "huggingface.co" in api_base and hf_token and "your_hf_token" not in hf_token.lower()
+
+    if not llm_api_key and not has_router_token:
         print("=" * 60)
-        print("CẢNH BÁO: Chưa thiết lập LLM_API_KEY.")
-        print("Câu trả lời sẽ là placeholder. Để có kết quả thực:")
-        print("  set LLM_API_KEY=your_api_key_here")
+        print("CẢNH BÁO: Chưa thiết lập token hop le cho LLM.")
+        print("Neu dung Hugging Face Router, co the set HF_TOKEN.")
+        print("Neu dung nha cung cap khac, set LLM_API_KEY.")
         print("=" * 60)
 
     print("\nKhởi tạo RAG System v2.0...")
-    print("(BAAI/bge-m3 + FAISS + Reranking + GPT 120b)")
+    print(
+        f"(BAAI/bge-m3 + FAISS + Reranking + "
+        f"{os.getenv('LLM_MODEL', 'gpt-120b')})"
+    )
     print()
     rag = RAGSystem()
 

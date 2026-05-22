@@ -1,60 +1,19 @@
 import sys
-import collections
-import string
 
-def normalize_answer(s):
-    """Lower text and remove punctuation, articles and extra whitespace."""
-    def remove_articles(text):
-        return text.replace(" a ", " ").replace(" an ", " ").replace(" the ", " ")
-
-    def white_space_fix(text):
-        return " ".join(text.split())
-
-    def remove_punc(text):
-        exclude = set(string.punctuation)
-        return "".join(ch for ch in text if ch not in exclude)
-
-    def lower(text):
-        return text.lower()
-
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
-
-
-def get_tokens(s):
-    if not s:
-        return []
-    return normalize_answer(s).split()
-
-def compute_exact(a_gold, a_pred):
-    return int(normalize_answer(a_gold) == normalize_answer(a_pred))
-
-def compute_f1(a_gold, a_pred):
-    gold_toks = get_tokens(a_gold)
-    pred_toks = get_tokens(a_pred)
-    common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
-    num_same = sum(common.values())
-    
-    if len(gold_toks) == 0 or len(pred_toks) == 0:
-        return int(gold_toks == pred_toks)
-        
-    if num_same == 0:
-        return 0
-        
-    precision = 1.0 * num_same / len(pred_toks)
-    recall = 1.0 * num_same / len(gold_toks)
-    f1 = (2 * precision * recall) / (precision + recall)
-    return f1
-
-def compute_recall(a_gold, a_pred):
-    gold_toks = get_tokens(a_gold)
-    pred_toks = get_tokens(a_pred)
-    common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
-    num_same = sum(common.values())
-    if len(gold_toks) == 0:
-        return int(gold_toks == pred_toks)
-    if num_same == 0:
-        return 0
-    return 1.0 * num_same / len(gold_toks)
+try:
+    from src.evaluation.qa_metrics import (
+        aggregate_mean,
+        squad_compute_exact,
+        squad_compute_f1,
+        squad_compute_recall,
+    )
+except ImportError:
+    from qa_metrics import (
+        aggregate_mean,
+        squad_compute_exact,
+        squad_compute_f1,
+        squad_compute_recall,
+    )
 
 def evaluate(gold_file, pred_file):
     with open(gold_file, 'r', encoding='utf-8') as fg:
@@ -78,17 +37,17 @@ def evaluate(gold_file, pred_file):
         # Since our references might be separated by semicolon, we split them
         possible_golds = [g.strip() for g in gold.split(";")]
         
-        best_exact = max([compute_exact(g, pred) for g in possible_golds])
-        best_f1 = max([compute_f1(g, pred) for g in possible_golds])
-        best_recall = max([compute_recall(g, pred) for g in possible_golds])
+        best_exact = max([squad_compute_exact(g, pred) for g in possible_golds])
+        best_f1 = max([squad_compute_f1(g, pred) for g in possible_golds])
+        best_recall = max([squad_compute_recall(g, pred) for g in possible_golds])
         
         exact_scores.append(best_exact)
         f1_scores.append(best_f1)
         recall_scores.append(best_recall)
         
-    avg_exact = sum(exact_scores) / len(exact_scores) if exact_scores else 0
-    avg_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0
-    avg_recall = sum(recall_scores) / len(recall_scores) if recall_scores else 0
+    avg_exact = aggregate_mean(exact_scores)
+    avg_f1 = aggregate_mean(f1_scores)
+    avg_recall = aggregate_mean(recall_scores)
     
     print(f"Total evaluated instances: {len(exact_scores)}")
     print(f"Exact Match: {avg_exact:.4f}")
