@@ -22,7 +22,7 @@ Candidate Chunks
     ▼  [Reranking: BAAI/bge-reranker-v2-m3]
 Top-3 Chunks
     │
-    ▼  [Generation: GPT 120b API]
+    ▼  [Generation: Qwen/Qwen2.5-7B-Instruct]
 Final Answer
 ```
 
@@ -59,21 +59,7 @@ Final Answer
 ## Setup & Installation
 
 ```bash
-pip install requests beautifulsoup4 sentence-transformers faiss-cpu openai
-```
-
-## Cấu hình API Key
-
-```bash
-# Windows CMD
-set LLM_API_KEY=your_api_key_here
-
-# Windows PowerShell
-$env:LLM_API_KEY="your_api_key_here"
-
-# Tùy chọn: đổi model hoặc base URL
-set LLM_MODEL=gpt-120b
-set LLM_API_BASE=https://api.openai.com/v1
+pip install requests beautifulsoup4 sentence-transformers faiss-cpu
 ```
 
 ## Chạy từng bước
@@ -114,7 +100,7 @@ python src/evaluation/run_eval.py
 |-----------|-------|--------|
 | Embedding | `BAAI/bge-m3` | HuggingFace |
 | Reranker | `BAAI/bge-reranker-v2-m3` | HuggingFace |
-| Generator | `GPT 120b` | API |
+| Generator | `Qwen/Qwen2.5-7B-Instruct` | HuggingFace |
 | Vector DB | FAISS (IndexFlatIP) | Meta AI |
 
 ## Evaluation Metrics
