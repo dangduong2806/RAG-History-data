@@ -1,0 +1,76 @@
+{
+  "summary": {
+    "num_items": 8,
+    "agreement": {
+      "exact": 0.25,
+      "canonical_exact": 0.75,
+      "token_f1": 0.641,
+      "canonical_token_f1": 0.8047,
+      "num_disagreements": 2
+    },
+    "annotator_a_vs_reference": {
+      "exact": 0.125,
+      "canonical_exact": 0.5,
+      "f1": 0.5437,
+      "canonical_f1": 0.6896
+    },
+    "annotator_b_vs_reference": {
+      "exact": 0.125,
+      "canonical_exact": 0.25,
+      "f1": 0.5082,
+      "canonical_f1": 0.4943
+    }
+  },
+  "disagreements": [
+    {
+      "item_id": "2",
+      "question": "Đại học Đông Dương được thành lập vào năm nào?",
+      "annotator_a": "1906",
+      "annotator_b": "năm 1996",
+      "annotator_a_canonical": "1906",
+      "annotator_b_canonical": "1996",
+      "exact": 0,
+      "canonical_exact": 0,
+      "f1": 0.0,
+      "canonical_f1": 0.0,
+      "reference_answer": "Năm 1906",
+      "annotator_a_vs_reference": {
+        "exact": 0,
+        "canonical_exact": 1,
+        "f1": 0.6666666666666666,
+        "canonical_f1": 1.0
+      },
+      "annotator_b_vs_reference": {
+        "exact": 0,
+        "canonical_exact": 0,
+        "f1": 0.5,
+        "canonical_f1": 0.0
+      }
+    },
+    {
+      "item_id": "4",
+      "question": "ĐHQGHN được thành lập trên cơ sở sắp xếp lại những trường đại học nào?",
+      "annotator_a": "Trường Đại học Tổng hợp Hà Nội Trường Đại học Sư phạm Hà Nội I và Trường Đại học Sư phạm Ngoại ngữ Hà Nội",
+      "annotator_b": "trường đại học tổng hợp Hà Nội",
+      "annotator_a_canonical": "truong dai hoc tong hop ha noi truong dai hoc su pham ha noi i va truong dai hoc su pham ngoai ngu ha noi",
+      "annotator_b_canonical": "truong dai hoc tong hop ha noi",
+      "exact": 0,
+      "canonical_exact": 0,
+      "f1": 0.4375,
+      "canonical_f1": 0.4375,
+      "reference_answer": "Trường Đại học Tổng hợp Hà Nội, Trường Đại học Sư phạm Hà Nội I và Trường Đại học Sư phạm Ngoại ngữ Hà Nội",
+      "annotator_a_vs_reference": {
+        "exact": 1,
+        "canonical_exact": 1,
+        "f1": 1.0,
+        "canonical_f1": 1.0
+      },
+      "annotator_b_vs_reference": {
+        "exact": 0,
+        "canonical_exact": 0,
+        "f1": 0.43750000000000006,
+        "canonical_f1": 0.43750000000000006
+      }
+    }
+  ]
+}
